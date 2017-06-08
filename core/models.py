@@ -39,13 +39,29 @@ class ProductQuestion(models.Model):
     row_stamp = models.DateTimeField(auto_now=True)
 
 
-class ProductQuestionChoices(models.Model):
+class ProductQuestionChoice(models.Model):
     product_question = models.ForeignKey(ProductQuestion, on_delete=models.CASCADE)
     description = models.TextField
     row_stamp = models.DateTimeField(auto_now=True)
 
 
+class ProductRow(models.Model):
+    inquiry = models.ForeignKey(Inquiry, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.IntegerField
+    price = models.DecimalField(decimal_places=2)
+
+
 class Inquiry(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     inquirer_email = models.CharField(max_length=255)
-    inquirer = models.ForeignKey(User,null=True, blank=True)
+    inquirer = models.ForeignKey(User, null=True, blank=True, on_delete=models.ObjectDoesNotExist)
+    is_anonymous = models.BooleanField
+    row_stamp = models.DateTimeField(auto_now=True)
+
+
+class ProductQuestionResponse(models.Model):
+    product_row = models.ForeignKey(ProductRow, on_delete=models.CASCADE)
+    question = models.ForeignKey(ProductQuestion, on_delete=models.CASCADE)
+    response = models.ForeignKey(ProductQuestionChoice, on_delete=models.CASCADE)
+

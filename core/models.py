@@ -44,10 +44,12 @@ class ProductQuestion(models.Model):
 class ProductQuestionChoice(models.Model):
     product_question = models.ForeignKey(ProductQuestion, on_delete=models.CASCADE)
     description = models.TextField
+    notes = models.TextField
     row_stamp = models.DateTimeField(auto_now=True)
 
 
 class ProductRow(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     inquiry = models.ForeignKey(Inquiry, on_delete=models.CASCADE, null=True, blank=True)
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE, null=True, blank=True)
     proposal_template = models.ForeignKey(ProposalTemplate, on_delete=models.CASCADE, null=True, blank=True)

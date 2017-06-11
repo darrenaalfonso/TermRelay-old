@@ -4,11 +4,26 @@ from .models import Inquiry, Company, Product, Permission
 
 
 class UserSerializer(serializers.ModelSerializer):
-    date_joined = serializers.ReadOnlyField()
-
     class Meta:
         model = User
-        fields = ('email', 'date_joined')
+        fields = ('id', 'email', 'password', 'first_name', 'last_name')
+        read_only_fields = ('id',)
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
+
+    def create(self, validated_data):
+        user = User.objects.create(
+            username=validated_data['email'],
+            email=validated_data['email'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name']
+        )
+
+        user.set_password(validated_data['password'])
+        user.save()
+
+        return user
 
 
 class CompanySerializer(serializers.ModelSerializer):
@@ -26,7 +41,8 @@ class PermissionSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail', read_only=True)
+    company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail',
+                                                  queryset=Company.objects.all())
 
     class Meta:
         model = Product

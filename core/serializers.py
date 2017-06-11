@@ -33,11 +33,20 @@ class CompanySerializer(serializers.ModelSerializer):
 
 
 class PermissionSerializer(serializers.ModelSerializer):
-    user = serializers.HyperlinkedRelatedField(many=False, view_name='user-detail', read_only=True)
+    def _user(self):
+        user = self.context['request'].user
+        return user
+
+    company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail',
+                                                  queryset=Company.objects.all())
+    current_user = serializers.SerializerMethodField('_user')
+    # user = serializers.HyperlinkedRelatedField(many=False, view_name='user-detail',
+    #                                            queryset=User.objects.
+    #                                            filter(pk=request.user.pk))
 
     class Meta:
         model = Permission
-        fields = ('user', )
+        fields = ('current_user', 'company')
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -50,7 +59,8 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class InquirySerializer(serializers.ModelSerializer):
-    company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail', read_only=True)
+    company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail',
+                                                  queryset=Company.objects.all())
 
     class Meta:
         model = Inquiry

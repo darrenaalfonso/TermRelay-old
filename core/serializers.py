@@ -1,5 +1,14 @@
 from rest_framework import serializers
-from .models import Inquiry, Company, Product
+from django.contrib.auth.models import User
+from .models import Inquiry, Company, Product, Permission
+
+
+class UserSerializer(serializers.ModelSerializer):
+    date_joined = serializers.ReadOnlyField()
+
+    class Meta:
+        model = User
+        fields = ('email', 'date_joined')
 
 
 class CompanySerializer(serializers.ModelSerializer):
@@ -8,8 +17,16 @@ class CompanySerializer(serializers.ModelSerializer):
         fields = ('name', 'email', 'phone')
 
 
+class PermissionSerializer(serializers.ModelSerializer):
+    user = serializers.HyperlinkedRelatedField(many=False, view_name='user-detail', read_only=True)
+
+    class Meta:
+        model = Permission
+        fields = ('user', )
+
+
 class ProductSerializer(serializers.ModelSerializer):
-    company = serializers.HyperlinkedRelatedField(many=False, view_name='CompanyViewSet')
+    company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail', read_only=True)
 
     class Meta:
         model = Product
@@ -17,7 +34,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class InquirySerializer(serializers.ModelSerializer):
-    company = serializers.HyperlinkedRelatedField(many=False, view_name='CompanyViewSet')
+    company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail', read_only=True)
 
     class Meta:
         model = Inquiry

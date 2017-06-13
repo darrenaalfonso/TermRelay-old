@@ -4,10 +4,10 @@ from rest_framework.routers import DefaultRouter
 
 
 router = DefaultRouter()
-router.register(r'companies', views.CompanyViewSet)
-router.register(r'products', views.ProductViewSet)
-router.register(r'users', views.UserViewSet)
-router.register(r'permissions', views.PermissionViewSet)
+router.register(r'companies', views.CompanyViewSet, base_name='company')
+router.register(r'products', views.ProductViewSet, base_name='product')
+router.register(r'users', views.UserViewSet, base_name='user')
+router.register(r'permissions', views.PermissionViewSet, base_name='permission')
 
 
 urlpatterns = [

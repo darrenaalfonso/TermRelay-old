@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from .utilities import ChoiceEnum
 from django.core.validators import MinValueValidator
 from safedelete.models import SafeDeleteModel
+from safedelete.models import SOFT_DELETE_CASCADE
 
 
 class Company(models.Model):
@@ -22,7 +23,7 @@ class Permission(models.Model):
     row_stamp = models.DateTimeField(auto_now=True)
 
 
-class Inquiry(SafeDeleteModel):
+class Inquiry(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, db_index=True)
     inquirer_email = models.CharField(max_length=255, db_index=True)
     inquirer = models.ForeignKey(User, null=True, blank=True, on_delete=models.ObjectDoesNotExist, db_index=True)
@@ -38,7 +39,7 @@ class ProposalTemplate(models.Model):
 
 
 class Proposal(models.Model):
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, db_index=True)
+    company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, db_index=True)
     inquiry = models.ForeignKey(Inquiry, on_delete=models.DO_NOTHING, null=True, blank=True, db_index=True)
     template = models.ForeignKey(ProposalTemplate, on_delete=models.DO_NOTHING, db_index=True)
     round = models.IntegerField(validators=[MinValueValidator(1)])

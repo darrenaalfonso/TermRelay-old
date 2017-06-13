@@ -31,22 +31,34 @@ class CompanySerializer(serializers.ModelSerializer):
         model = Company
         fields = ('name', 'email', 'phone')
 
+    def create(self, validated_data):
+        company = Company.objects.create(
+            name=validated_data['name'],
+            email=validated_data['email'],
+            phone=validated_data['phone']
+        )
+        company.save()
+
+        permission = Permission.objects.create(
+            company=company,
+            level="creator",
+            user=self.context['request'].user
+        )
+        permission.save()
+
+        return company
+
 
 class PermissionSerializer(serializers.ModelSerializer):
-    def _user(self):
-        user = self.context['request'].user
-        return user
-
     company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail',
                                                   queryset=Company.objects.all())
-    current_user = serializers.SerializerMethodField('_user')
     # user = serializers.HyperlinkedRelatedField(many=False, view_name='user-detail',
     #                                            queryset=User.objects.
     #                                            filter(pk=request.user.pk))
 
     class Meta:
         model = Permission
-        fields = ('current_user', 'company')
+        fields = ('pk', 'user', 'company', 'level')
 
 
 class ProductSerializer(serializers.ModelSerializer):

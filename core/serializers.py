@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
-from .models import Inquiry, Company, Product, Permission
+from .models import *
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -52,13 +51,44 @@ class CompanySerializer(serializers.ModelSerializer):
 class PermissionSerializer(serializers.ModelSerializer):
     company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail',
                                                   queryset=Company.objects.all())
-    # user = serializers.HyperlinkedRelatedField(many=False, view_name='user-detail',
-    #                                            queryset=User.objects.
-    #                                            filter(pk=request.user.pk))
 
     class Meta:
         model = Permission
         fields = ('pk', 'user', 'company', 'level')
+
+
+class InquirySerializer(serializers.ModelSerializer):
+    company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail',
+                                                  queryset=Company.objects.all())
+    inquirer = serializers.HyperlinkedRelatedField(many=False, view_name='user-detail', queryset=User.objects.all())
+
+    class Meta:
+        model = Inquiry
+        fields = ('pk', 'company', 'inquirer_email', 'inquirer', 'is_anonymous', 'inquiry_date')
+
+
+class ProposalTemplateSerializer(serializers.ModelSerializer):
+    company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail',
+                                                  queryset=Company.objects.all())
+    creator = serializers.HyperlinkedRelatedField(many=False, view_name='user-detail', queryset=User.objects.all())
+
+    class Meta:
+        model = ProposalTemplate
+        fields = ('pk', 'company', 'creator', 'creation_date')
+
+
+class Proposal(serializers.ModelSerializer):
+    company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail',
+                                                  queryset=Company.objects.all())
+    inquiry = serializers.HyperlinkedRelatedField(many=False, view_name='inquiry-detail',
+                                                  queryset=Inquiry.objects.all())
+    template = serializers.HyperlinkedRelatedField(many=False, view_name='proposaltemplate-detail',
+                                                   queryset=ProposalTemplate.objects.all())
+    users = serializers.HyperlinkedRelatedField(many=True, view_name='user-detail', queryset=User.objects.all())
+
+    class Meta:
+        model = Proposal
+        fields = ('pk', 'company', 'inquiry', 'template', 'users', 'round', 'date')
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -67,7 +97,27 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('title', 'company', 'image', 'description', 'product_type', 'unit_description', 'price_per_unit')
+        fields = ('pk', 'title', 'company', 'image', 'description', 'product_type', 'unit_description',
+                  'price_per_unit')
+
+
+class ProductQuestionSerializer(serializers.ModelSerializer):
+    product = serializers.HyperlinkedRelatedField(many=False, view_name='product-detail',
+                                                  queryset=Product.objects.all())
+
+    class Meta:
+        model = ProductQuestion
+        fields = ('pk', 'product', 'question')
+
+
+class ProductQuestionChoiceSerializer(serializers.ModelSerializer):
+    product_question = serializers.HyperlinkedRelatedField(many=False, view_name='productquestion-detail',
+                                                           queryset=ProductQuestion.objects.all())
+
+    class Meta:
+        model = ProductQuestionChoice
+        fields = ('pk', 'product_question', 'text_answer', 'numerical_answer', 'numerical_answer_units', 'description',
+                  'notes')
 
 
 class InquirySerializer(serializers.ModelSerializer):

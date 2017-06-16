@@ -2,8 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from .utilities import ChoiceEnum
 from django.core.validators import MinValueValidator
-from safedelete.models import SafeDeleteModel
-from safedelete.models import SOFT_DELETE_CASCADE
 
 
 class Company(models.Model):
@@ -28,6 +26,7 @@ class Inquiry(models.Model):
     inquirer_email = models.CharField(max_length=255, db_index=True)
     inquirer = models.ForeignKey(User, null=True, blank=True, on_delete=models.ObjectDoesNotExist, db_index=True)
     is_anonymous = models.BooleanField
+    inquiry_date = models.DateTimeField(auto_now=True)
     row_stamp = models.DateTimeField(auto_now=True)
 
 
@@ -42,8 +41,8 @@ class Proposal(models.Model):
     company = models.ForeignKey(Company, on_delete=models.DO_NOTHING, db_index=True)
     inquiry = models.ForeignKey(Inquiry, on_delete=models.DO_NOTHING, null=True, blank=True, db_index=True)
     template = models.ForeignKey(ProposalTemplate, on_delete=models.DO_NOTHING, db_index=True)
-    round = models.IntegerField(validators=[MinValueValidator(1)])
     users = models.ManyToManyField(User, db_index=True)
+    round = models.IntegerField(validators=[MinValueValidator(1)])
     date = models.DateTimeField(db_index=True)
     row_stamp = models.DateTimeField(auto_now=True)
 
@@ -73,8 +72,11 @@ class ProductQuestion(models.Model):
 
 class ProductQuestionChoice(models.Model):
     product_question = models.ForeignKey(ProductQuestion, on_delete=models.CASCADE, db_index=True)
+    text_answer = models.TextField(null=True, blank=True)
+    numerical_answer = models.DecimalField(decimal_places=4, max_digits=20, null=True, blank=True)
+    numerical_answer_units = models.CharField(max_length=30, null=True, blank=True)
     description = models.TextField
-    notes = models.TextField
+    notes = models.TextField(null=True, blank=True)
     row_stamp = models.DateTimeField(auto_now=True)
 
 

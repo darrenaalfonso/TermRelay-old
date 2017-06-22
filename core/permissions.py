@@ -19,5 +19,5 @@ class IsCreatorOrContributor(permissions.BasePermission):
                 return False
             except AttributeError:
                 return False
-
+        return False
 

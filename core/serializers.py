@@ -47,10 +47,23 @@ class CompanySerializer(serializers.ModelSerializer):
 
         return company
 
+    def get_queryset(self):
+        current_user = self.request.user
+        my_permitted_companies = Permission.objects.filter(user=current_user).values_list('pk').distinct()
+        my_companies = Q(pk__in=my_permitted_companies)
+        return Company.objects.filter(my_companies)
+
+
+class UserCompanyPKField(serializers.PrimaryKeyRelatedField):
+    def get_queryset(self):
+        current_user = self.context['request'].user
+        my_permitted_companies = Permission.objects.filter(user=current_user).values_list('pk').distinct()
+        my_companies = Q(pk__in=my_permitted_companies)
+        return Company.objects.filter(my_companies)
+
 
 class PermissionSerializer(serializers.ModelSerializer):
-    company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail',
-                                                  queryset=Company.objects.all())
+    company = UserCompanyPKField(many=False)
 
     class Meta:
         model = Permission
@@ -58,8 +71,7 @@ class PermissionSerializer(serializers.ModelSerializer):
 
 
 class InquirySerializer(serializers.ModelSerializer):
-    company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail',
-                                                  queryset=Company.objects.all())
+    company = UserCompanyPKField(many=False)
     inquirer = serializers.HyperlinkedRelatedField(many=False, view_name='user-detail', queryset=User.objects.all())
 
     class Meta:
@@ -68,8 +80,7 @@ class InquirySerializer(serializers.ModelSerializer):
 
 
 class ProposalTemplateSerializer(serializers.ModelSerializer):
-    company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail',
-                                                  queryset=Company.objects.all())
+    company = UserCompanyPKField(many=False)
     creator = serializers.HyperlinkedRelatedField(many=False, view_name='user-detail', queryset=User.objects.all())
 
     class Meta:
@@ -77,9 +88,8 @@ class ProposalTemplateSerializer(serializers.ModelSerializer):
         fields = ('pk', 'company', 'creator', 'creation_date')
 
 
-class Proposal(serializers.ModelSerializer):
-    company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail',
-                                                  queryset=Company.objects.all())
+class ProposalSerializer(serializers.ModelSerializer):
+    company = UserCompanyPKField(many=False)
     inquiry = serializers.HyperlinkedRelatedField(many=False, view_name='inquiry-detail',
                                                   queryset=Inquiry.objects.all())
     template = serializers.HyperlinkedRelatedField(many=False, view_name='proposaltemplate-detail',
@@ -120,10 +130,29 @@ class ProductQuestionChoiceSerializer(serializers.ModelSerializer):
                   'notes')
 
 
-class InquirySerializer(serializers.ModelSerializer):
-    company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail',
-                                                  queryset=Company.objects.all())
+class ProductRowSerializer(serializers.ModelSerializer):
+    product = serializers.HyperlinkedRelatedField(many=False, view_name='product-detail',
+                                                  queryset=Product.objects.all())
+    inquiry = serializers.HyperlinkedRelatedField(many=False, view_name='inquiry-detail',
+                                                  queryset=Inquiry.objects.all())
+    proposal = serializers.HyperlinkedRelatedField(many=False, view_name='proposal-detail',
+                                                   queryset=Proposal.objects.all())
+    proposal_template = serializers.HyperlinkedRelatedField(many=False, view_name='proposaltemplate-detail',
+                                                            queryset=ProposalTemplate.objects.all())
 
     class Meta:
-        model = Inquiry
-        fields = ('company', 'inquirer_email', 'is_anonymous')
+        model = ProductRow
+        fields = ('pk', 'product', 'inquiry', 'proposal', 'proposal_template', 'quantity', 'price')
+
+
+class ProductQuestionResponseSerializer(serializers.ModelSerializer):
+    product_row = serializers.HyperlinkedRelatedField(many=False, view_name='productrow-detail',
+                                                      queryset=ProductRow.objects.all())
+    question = serializers.HyperlinkedRelatedField(many=False, view_name='question-detail',
+                                                   queryset=ProductQuestion.objects.all())
+    response = serializers.HyperlinkedRelatedField(many=False, view_name='productquestionchoice-detail',
+                                                   queryset=ProductQuestionChoice.objects.all())
+
+    class Meta:
+        model = ProductQuestionResponse
+        fields = ('pk', 'product_row', 'question', 'response')

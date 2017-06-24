@@ -25,7 +25,7 @@ class Inquiry(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, db_index=True)
     inquirer_email = models.CharField(max_length=255, db_index=True)
     inquirer = models.ForeignKey(User, null=True, blank=True, on_delete=models.ObjectDoesNotExist, db_index=True)
-    is_anonymous = models.BooleanField
+    is_anonymous = models.BooleanField(default=True)
     inquiry_date = models.DateTimeField(auto_now=True)
     row_stamp = models.DateTimeField(auto_now=True)
 
@@ -65,13 +65,14 @@ class Product(models.Model):
 
 
 class ProductQuestion(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, db_index=True)
+    product = models.ForeignKey(Product, related_name='product_questions', on_delete=models.CASCADE, db_index=True)
     question = models.TextField(db_index=True)
     row_stamp = models.DateTimeField(auto_now=True)
 
 
 class ProductQuestionChoice(models.Model):
-    product_question = models.ForeignKey(ProductQuestion, on_delete=models.CASCADE, db_index=True)
+    product_question = models.ForeignKey(ProductQuestion, related_name='choices', on_delete=models.CASCADE,
+                                         db_index=True)
     text_answer = models.TextField(null=True, blank=True)
     numerical_answer = models.DecimalField(decimal_places=4, max_digits=20, null=True, blank=True)
     numerical_answer_units = models.CharField(max_length=30, null=True, blank=True)
@@ -82,8 +83,10 @@ class ProductQuestionChoice(models.Model):
 
 class ProductRow(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, db_index=True)
-    inquiry = models.ForeignKey(Inquiry, on_delete=models.CASCADE, null=True, blank=True, db_index=True)
-    proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE, null=True, blank=True, db_index=True)
+    inquiry = models.ForeignKey(Inquiry, related_name='product_rows', on_delete=models.CASCADE, null=True, blank=True,
+                                db_index=True)
+    proposal = models.ForeignKey(Proposal, related_name='product_rows', on_delete=models.CASCADE, null=True, blank=True,
+                                 db_index=True)
     proposal_template = models.ForeignKey(ProposalTemplate, on_delete=models.CASCADE, null=True, blank=True,
                                           db_index=True)
     quantity = models.IntegerField

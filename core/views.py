@@ -12,15 +12,25 @@ class CompanyViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         current_user = self.request.user
-        my_permitted_companies = Permission.objects.filter(user=current_user).values_list('pk').distinct()
-        my_companies = Q(pk__in=my_permitted_companies)
-        return Company.objects.filter(my_companies)
+        permitted_companies = Permission.objects.filter(user=current_user).values_list('pk').distinct()
+        companies = Q(pk__in=permitted_companies)
+        return Company.objects.filter(companies)
 
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = (permissions.IsAuthenticated, )
+
+
+class InquiryViewSet(viewsets.ModelViewSet):
+    queryset = Inquiry.objects.all()
+    serializer_class = InquirySerializer
+
+    def get_serializer(self, *args, **kwargs):
+        serializer_class = self.get_serializer_class()
+        context = self.get_serializer_context()
+        return serializer_class(*args, company_id=self.kwargs['company_id'], context=context, **kwargs)
 
 
 class ProposalViewSet(viewsets.ModelViewSet):
@@ -30,9 +40,9 @@ class ProposalViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         current_user = self.request.user
-        my_permitted_companies = Permission.objects.filter(user=current_user).values_list('pk').distinct()
-        my_proposals = Q(company__in=my_permitted_companies)
-        return Proposal.objects.filter(my_proposals)
+        permitted_companies = Permission.objects.filter(user=current_user).values_list('pk').distinct()
+        proposals = Q(company__in=permitted_companies)
+        return Proposal.objects.filter(proposals)
 
 
 class UserViewSet(viewsets.ModelViewSet):

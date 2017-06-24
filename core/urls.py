@@ -9,8 +9,9 @@ router.register(r'products', views.ProductViewSet, base_name='product')
 router.register(r'users', views.UserViewSet, base_name='user')
 router.register(r'permissions', views.PermissionViewSet, base_name='permission')
 router.register(r'proposals', views.ProposalViewSet, base_name='proposal')
+router.register(r'^company/(?P<company_id>\d+)/inquiry', views.InquiryViewSet, base_name='inquiry')
 
 urlpatterns = [
     url(r'^', include(router.urls)),
-    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
+    url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]

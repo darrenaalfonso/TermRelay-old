@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import *
+from django.db.models import Q
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -28,7 +29,7 @@ class UserSerializer(serializers.ModelSerializer):
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
-        fields = ('name', 'email', 'phone')
+        fields = ('pk', 'name', 'email', 'phone')
 
     def create(self, validated_data):
         company = Company.objects.create(
@@ -57,9 +58,15 @@ class CompanySerializer(serializers.ModelSerializer):
 class UserCompanyPKField(serializers.PrimaryKeyRelatedField):
     def get_queryset(self):
         current_user = self.context['request'].user
-        my_permitted_companies = Permission.objects.filter(user=current_user).values_list('pk').distinct()
-        my_companies = Q(pk__in=my_permitted_companies)
-        return Company.objects.filter(my_companies)
+        permitted_companies = Permission.objects.filter(user=current_user).values_list('pk').distinct()
+        company_set = Q(pk__in=permitted_companies)
+        return Company.objects.filter(company_set)
+
+
+class UserPKField(serializers.PrimaryKeyRelatedField):
+    def get_queryset(self):
+        current_user = self.context['request'].user
+        return User.objects.filter(username=current_user.username)
 
 
 class PermissionSerializer(serializers.ModelSerializer):
@@ -68,15 +75,6 @@ class PermissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Permission
         fields = ('pk', 'user', 'company', 'level')
-
-
-class InquirySerializer(serializers.ModelSerializer):
-    company = UserCompanyPKField(many=False)
-    inquirer = serializers.HyperlinkedRelatedField(many=False, view_name='user-detail', queryset=User.objects.all())
-
-    class Meta:
-        model = Inquiry
-        fields = ('pk', 'company', 'inquirer_email', 'inquirer', 'is_anonymous', 'inquiry_date')
 
 
 class ProposalTemplateSerializer(serializers.ModelSerializer):
@@ -88,22 +86,8 @@ class ProposalTemplateSerializer(serializers.ModelSerializer):
         fields = ('pk', 'company', 'creator', 'creation_date')
 
 
-class ProposalSerializer(serializers.ModelSerializer):
-    company = UserCompanyPKField(many=False)
-    inquiry = serializers.HyperlinkedRelatedField(many=False, view_name='inquiry-detail',
-                                                  queryset=Inquiry.objects.all())
-    template = serializers.HyperlinkedRelatedField(many=False, view_name='proposaltemplate-detail',
-                                                   queryset=ProposalTemplate.objects.all())
-    users = serializers.HyperlinkedRelatedField(many=True, view_name='user-detail', queryset=User.objects.all())
-
-    class Meta:
-        model = Proposal
-        fields = ('pk', 'company', 'inquiry', 'template', 'users', 'round', 'date')
-
-
 class ProductSerializer(serializers.ModelSerializer):
-    company = serializers.HyperlinkedRelatedField(many=False, view_name='company-detail',
-                                                  queryset=Company.objects.all())
+    company = UserCompanyPKField(many=False)
 
     class Meta:
         model = Product
@@ -156,3 +140,34 @@ class ProductQuestionResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductQuestionResponse
         fields = ('pk', 'product_row', 'question', 'response')
+
+
+class InquirySerializer(serializers.ModelSerializer):
+    def __init__(self, *args, company_id=None, **kwargs):
+        super(InquirySerializer, self).__init__(*args, **kwargs)
+        self.fields['company'].queryset = Company.objects.filter(pk=company_id)
+
+    company = serializers.HyperlinkedRelatedField(many=False,
+                                                  view_name='company-detail',
+                                                  queryset=Company.objects.all())
+    inquirer = UserPKField(many=False)
+    is_anonymous = serializers.BooleanField
+
+    class Meta:
+        model = Inquiry
+        fields = ('pk', 'company', 'inquirer_email', 'inquirer', 'is_anonymous', 'inquiry_date', 'product_rows')
+        read_only_fields = ('inquirer', 'inquiry_date')
+
+
+class ProposalSerializer(serializers.ModelSerializer):
+    company = UserCompanyPKField(many=False)
+    inquiry = serializers.HyperlinkedRelatedField(many=False, view_name='inquiry-detail',
+                                                  queryset=Inquiry.objects.all())
+    template = serializers.HyperlinkedRelatedField(many=False, view_name='proposaltemplate-detail',
+                                                   queryset=ProposalTemplate.objects.all())
+    users = serializers.HyperlinkedRelatedField(many=True, view_name='user-detail', read_only=True)
+
+    class Meta:
+        model = Proposal
+        fields = ('pk', 'company', 'inquiry', 'template', 'users', 'round', 'date', 'product_rows')
+        read_only_fields = ('users', 'round', 'date')

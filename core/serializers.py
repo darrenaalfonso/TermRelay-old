@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import *
 from django.db.models import Q
 
+global_company_id = 0
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -67,6 +69,12 @@ class UserPKField(serializers.PrimaryKeyRelatedField):
     def get_queryset(self):
         current_user = self.context['request'].user
         return User.objects.filter(username=current_user.username)
+
+
+class CompanyProductField(serializers.PrimaryKeyRelatedField):
+    def get_queryset(self):
+        product_query = Q(company__pk=global_company_id)
+        return Product.objects.filter(product_query)
 
 
 class PermissionSerializer(serializers.ModelSerializer):
@@ -145,18 +153,23 @@ class ProductQuestionResponseSerializer(serializers.ModelSerializer):
 class InquirySerializer(serializers.ModelSerializer):
     def __init__(self, *args, company_id=None, **kwargs):
         super(InquirySerializer, self).__init__(*args, **kwargs)
-        self.fields['company'].queryset = Company.objects.filter(pk=company_id)
+        company_set = Company.objects.filter(pk=company_id)
+        self.fields['company'].queryset = company_set
+        global global_company_id
+        global_company_id = company_id
 
     company = serializers.HyperlinkedRelatedField(many=False,
                                                   view_name='company-detail',
                                                   queryset=Company.objects.all())
     inquirer = UserPKField(many=False)
     is_anonymous = serializers.BooleanField
+    product_rows = CompanyProductField(many=True)
 
     class Meta:
         model = Inquiry
-        fields = ('pk', 'company', 'inquirer_email', 'inquirer', 'is_anonymous', 'inquiry_date', 'product_rows')
-        read_only_fields = ('inquirer', 'inquiry_date')
+        fields = ('pk', 'company', 'inquirer_email', 'inquirer', 'is_anonymous', 'inquiry_date', 'product_rows',
+                  'company_id')
+        read_only_fields = ('inquirer', 'inquiry_date', 'company_id')
 
 
 class ProposalSerializer(serializers.ModelSerializer):

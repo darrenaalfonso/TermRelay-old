@@ -63,6 +63,9 @@ class Product(models.Model):
     price_per_unit = models.DecimalField(decimal_places=2, max_digits=20)
     row_stamp = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return str(self.company) + " " + self.title + ": " + self.description
+
 
 class ProductQuestion(models.Model):
     product = models.ForeignKey(Product, related_name='product_questions', on_delete=models.CASCADE, db_index=True)
